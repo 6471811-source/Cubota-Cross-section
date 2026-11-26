@@ -1,10 +1,10 @@
-<!-- Cubica: конструктор сечения кубической рейки (ширина × высота, цвет, 2D-чертёж + 3D). Вставить в Tilda: блок T123 (Другое → HTML-код) -->
+<!-- Cubica: конструктор сечения кубической рейки — только модель (ползунки, цвета, 2D + 3D). Вставить в Tilda: Zero Block → элемент HTML или блок T123. Текст — отдельными текстовыми элементами. -->
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-#cub-sec{--bg:#fff6f6;--ink:#1f2328;--muted:#5d6168;--red:#a80a0d;--red2:#6e1416;--f:'Exo 2',system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-family:var(--f);color:var(--ink);background:var(--bg);padding:clamp(28px,5vw,72px) 0}
+#cub-sec{--bg:#fff6f6;--ink:#1f2328;--muted:#5d6168;--red:#a80a0d;--red2:#6e1416;--f:'Exo 2',system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-family:var(--f);color:var(--ink);background:transparent;padding:0;width:100%}
 #cub-sec *{box-sizing:border-box}
 #cub-sec p,#cub-sec h2{margin:0}
-#cub-sec .cs-wrap{max-width:1360px;margin:0 auto;padding:0 clamp(16px,3vw,46px);display:grid;grid-template-columns:minmax(0,1.04fr) minmax(0,.9fr);gap:clamp(24px,3.4vw,52px);align-items:start}
+#cub-sec .cs-wrap{width:100%;margin:0;padding:0}
 /* ---------- сцена ---------- */
 #cub-sec .cs-stage{position:relative;isolation:isolate;aspect-ratio:4/3.15;min-height:400px;overflow:hidden;border:1px solid #d9dee5;user-select:none;-webkit-user-select:none;
   background:radial-gradient(ellipse at 52% 42%,#f8fafc 0%,#eaeff4 55%,#dbe2ea 100%)}
@@ -91,7 +91,6 @@
 #cub-sec .cs-pop b{color:#1f2328}
 @media (max-width:900px){
   #cub-sec .cs-wrap{grid-template-columns:1fr}
-  #cub-sec .cs-text{order:-1}
   #cub-sec .cs-stage{aspect-ratio:auto;height:min(118vw,560px);min-height:420px}
 }
 @media (max-width:520px){
@@ -148,19 +147,6 @@
    </div>
   </div>
 
-  <div class="cs-text">
-    <h2>Размеры, характеристики и цена кубообразной рейки</h2>
-    <p class="cs-lead">Базовая цена — от 5,00 BYN за погонный метр. Итоговая стоимость зависит от толщины металла, высоты сечения, цвета и объема партии. Для юрлиц действуют оптовые скидки. Отправьте чертеж — рассчитаем смету за 15 минут.</p>
-    <div class="cs-spec">
-      <p><b>Материал:</b> Высококачественная оцинкованная сталь с полимерным покрытием</p>
-      <p><b>Толщина металла:</b> 0,3–0,5 мм</p>
-      <p><b>Ширина рейки:</b> 30–300 мм (с шагом 1 мм). У каждой ширины может быть любая высота.</p>
-      <p><b>Высота рейки:</b> от 10 мм (с шагом 1 мм)</p>
-      <p><b>Расстояние между рейками:</b> от 10 мм (с шагом 1 мм)</p>
-      <p><b>Длина рейки:</b> до 6000 мм</p>
-    </div>
-    <p class="cs-pop"><b>Самые ходовые размеры</b> — ширина 30–100 мм и высота 30–200 мм с шагом 10 мм: их можно покрутить на схеме. Любой другой размер изготовим по вашему ТЗ с шагом 1 мм.</p>
-  </div>
  </div>
 </section>
 
