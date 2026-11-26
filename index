@@ -1,0 +1,456 @@
+<!-- Cubica: конструктор сечения кубической рейки (ширина × высота, цвет, 2D-чертёж + 3D). Вставить в Tilda: блок T123 (Другое → HTML-код) -->
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+#cub-sec{--bg:#fff6f6;--ink:#1f2328;--muted:#5d6168;--red:#a80a0d;--red2:#6e1416;--f:'Exo 2',system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-family:var(--f);color:var(--ink);background:var(--bg);padding:clamp(28px,5vw,72px) 0}
+#cub-sec *{box-sizing:border-box}
+#cub-sec p,#cub-sec h2{margin:0}
+#cub-sec .cs-wrap{max-width:1360px;margin:0 auto;padding:0 clamp(16px,3vw,46px);display:grid;grid-template-columns:minmax(0,1.04fr) minmax(0,.9fr);gap:clamp(24px,3.4vw,52px);align-items:start}
+/* ---------- сцена ---------- */
+#cub-sec .cs-stage{position:relative;isolation:isolate;aspect-ratio:4/3.15;min-height:400px;overflow:hidden;border:1px solid #d9dee5;user-select:none;-webkit-user-select:none;
+  background:radial-gradient(ellipse at 52% 42%,#f8fafc 0%,#eaeff4 55%,#dbe2ea 100%)}
+#cub-sec .cs-grid{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.6;transition:opacity .5s;
+  background-image:linear-gradient(rgba(60,75,95,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(60,75,95,.07) 1px,transparent 1px),linear-gradient(rgba(60,75,95,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(60,75,95,.035) 1px,transparent 1px);
+  background-size:60px 60px,60px 60px,12px 12px,12px 12px}
+#cub-sec .cs-stage.is-3d .cs-grid{opacity:0}
+#cub-sec .cs-svg{position:absolute;inset:0;width:100%;height:100%;z-index:1;transition:opacity .5s,transform .6s}
+#cub-sec .cs-stage.is-3d .cs-svg{opacity:0;transform:scale(.94);pointer-events:none}
+#cub-sec .cs-gl{position:absolute;inset:0;z-index:1;opacity:0;transition:opacity .6s;pointer-events:none;cursor:grab;touch-action:pan-y}
+#cub-sec .cs-gl canvas{display:block;width:100%!important;height:100%!important}
+#cub-sec .cs-stage.is-3d .cs-gl{opacity:1;pointer-events:auto}
+#cub-sec .cs-wmt{position:absolute;inset:0;z-index:2;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='140'%3E%3Ctext x='120' y='76' text-anchor='middle' transform='rotate(-24 120 70)' font-family='Arial,Helvetica,sans-serif' font-size='20' font-weight='700' letter-spacing='1.5' fill='rgba(55,68,88,0.10)'%3ECubica.by%3C/text%3E%3C/svg%3E")}
+#cub-sec .cs-mode{position:absolute;left:14px;top:14px;z-index:5;display:flex;background:#fff;border:1px solid #d5dae1;box-shadow:0 4px 16px rgba(30,40,55,.08)}
+#cub-sec .cs-mode button{all:unset;cursor:pointer;padding:9px 16px;font:600 12px/1 var(--f);letter-spacing:.06em;text-transform:uppercase;color:#2b2f35;transition:background .2s,color .2s}
+#cub-sec .cs-mode button+button{border-left:1px solid #d5dae1}
+#cub-sec .cs-mode button:hover{color:var(--red)}
+#cub-sec .cs-mode button.on{background:var(--red);color:#fff}
+#cub-sec .cs-badge{position:absolute;right:16px;top:12px;z-index:5;text-align:right;pointer-events:none}
+#cub-sec .cs-badge b{display:block;font:800 clamp(24px,2.7vw,36px)/1 var(--f);letter-spacing:.01em}
+#cub-sec .cs-badge b i{font-style:normal;color:var(--red)}
+#cub-sec .cs-badge span{display:block;margin-top:4px;font:500 11px/1.35 var(--f);color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+#cub-sec .cs-badge em{display:block;font:600 12px/1.3 var(--f);font-style:normal;color:#2b2f35;margin-top:2px}
+#cub-sec .cs-wm{position:absolute;right:16px;bottom:76px;z-index:3;pointer-events:none;font:700 12px/1 var(--f);letter-spacing:.1em;text-transform:uppercase;color:rgba(55,68,88,.4)}
+#cub-sec .cs-wm b{color:rgba(168,10,13,.6)}
+#cub-sec .cs-hint{position:absolute;left:50%;top:58px;transform:translateX(-50%);z-index:3;font:500 11px/1 var(--f);color:#8a9099;pointer-events:none;opacity:0;transition:opacity .5s;white-space:nowrap}
+#cub-sec .cs-stage.is-3d .cs-hint{opacity:1}
+/* ---------- ползунки ---------- */
+#cub-sec .sl{position:absolute;z-index:5;touch-action:none;cursor:pointer}
+#cub-sec .sl-h{left:78px;right:26px;bottom:14px;height:44px}
+#cub-sec .sl-v{left:12px;top:86px;bottom:78px;width:52px}
+#cub-sec .sl-track{position:absolute;background:#cfd5dd;border-radius:3px}
+#cub-sec .sl-h .sl-track{left:0;right:0;top:12px;height:4px}
+#cub-sec .sl-v .sl-track{top:0;bottom:0;right:12px;width:4px}
+#cub-sec .sl-fill{position:absolute;background:var(--red);border-radius:3px}
+#cub-sec .sl-h .sl-fill{left:0;top:0;bottom:0}
+#cub-sec .sl-v .sl-fill{left:0;right:0;bottom:0}
+#cub-sec .sl-tick{position:absolute;background:#9aa3ae;pointer-events:none}
+#cub-sec .sl-h .sl-tick{top:20px;width:1px;height:5px;transform:translateX(-.5px)}
+#cub-sec .sl-v .sl-tick{right:20px;height:1px;width:5px;transform:translateY(.5px)}
+#cub-sec .sl-lab{position:absolute;font:600 11px/1 var(--f);color:#7d858f;pointer-events:none;transition:color .2s}
+#cub-sec .sl-h .sl-lab{top:29px;transform:translateX(-50%)}
+#cub-sec .sl-v .sl-lab{right:28px;transform:translateY(50%)}
+#cub-sec .sl-lab.on{color:var(--red)}
+#cub-sec .sl-thumb{position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--red);box-shadow:0 2px 8px rgba(168,10,13,.35);outline:none;transition:transform .15s}
+#cub-sec .sl-h .sl-thumb{top:3px;transform:translateX(-50%)}
+#cub-sec .sl-v .sl-thumb{right:3px;transform:translateY(50%)}
+#cub-sec .sl:hover .sl-thumb,#cub-sec .sl-thumb:focus-visible{box-shadow:0 0 0 6px rgba(168,10,13,.14),0 2px 8px rgba(168,10,13,.35)}
+#cub-sec .sl-cap{position:absolute;font:700 10px/1 var(--f);letter-spacing:.08em;text-transform:uppercase;color:#5d6168;pointer-events:none}
+#cub-sec .sl-h .sl-cap{left:-66px;top:9px}
+#cub-sec .sl-v .sl-cap{left:2px;top:-17px}
+/* ---------- цвета ---------- */
+#cub-sec .cs-colors{margin-top:14px;display:grid;grid-template-columns:auto 1fr;gap:10px 16px;align-items:center}
+#cub-sec .cc-h{font:700 11px/1.2 var(--f);letter-spacing:.08em;text-transform:uppercase;color:#5d6168;white-space:nowrap}
+#cub-sec .cc-row{display:flex;flex-wrap:wrap;gap:8px}
+#cub-sec .cc{all:unset;cursor:pointer;width:34px;height:34px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18),0 1px 3px rgba(0,0,0,.12);outline:2px solid transparent;outline-offset:2px;transition:outline-color .2s,transform .2s;background-size:cover;background-position:center;position:relative}
+#cub-sec .cc.w{border-radius:4px;width:38px}
+#cub-sec .cc:hover{transform:translateY(-2px)}
+#cub-sec .cc.on{outline-color:var(--red)}
+#cub-sec .cc.any{background:conic-gradient(#e53935,#fbc02d,#43a047,#1e88e5,#8e24aa,#e53935)}
+#cub-sec .cc-name{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font:600 14px/1.3 var(--f);padding:10px 14px;background:#fff;border:1px solid #ecdede}
+#cub-sec .cc-name small{font-weight:500;color:#5d6168}
+#cub-sec .cc-ral{display:none;align-items:center;gap:6px;margin-left:auto}
+#cub-sec .cc-ral.on{display:flex}
+#cub-sec .cc-ral input{width:78px;padding:7px 8px;border:1px solid #cfd4da;font:600 13px/1 var(--f);color:#1f2328;outline:none;border-radius:0}
+#cub-sec .cc-ral input:focus{border-color:var(--red)}
+/* svg */
+#cub-sec .p-out{fill:none;stroke:#1f2328;stroke-width:8;stroke-linejoin:miter;stroke-linecap:square}
+#cub-sec .p-in{fill:none;stroke-width:4;stroke-linejoin:miter;stroke-linecap:square}
+#cub-sec .p-face{fill:none;stroke:var(--red);stroke-width:2;stroke-dasharray:6 4;opacity:.9}
+#cub-sec .p-ghost{fill:none;stroke:#b4bcc6;stroke-width:1.2;stroke-dasharray:4 5;opacity:.8}
+#cub-sec .d-line{stroke:#5d6168;stroke-width:1.2;fill:none}
+#cub-sec .d-ext{stroke:#8a9099;stroke-width:1;stroke-dasharray:3 3;fill:none}
+#cub-sec .d-txt{font:700 22px var(--f);fill:#1f2328}
+#cub-sec .d-txt.h{fill:var(--red)}
+#cub-sec .d-note{font:500 11.5px var(--f);fill:#8a9099;letter-spacing:.03em}
+/* ---------- текст ---------- */
+#cub-sec h2{font:800 clamp(28px,3.3vw,46px)/1.12 var(--f);text-transform:uppercase;margin-bottom:22px}
+#cub-sec .cs-lead{font:700 clamp(16px,1.35vw,19px)/1.5 var(--f);margin-bottom:22px}
+#cub-sec .cs-spec{font:400 16px/1.75 var(--f);color:#333}
+#cub-sec .cs-spec b{color:#1f2328;font-weight:700}
+#cub-sec .cs-pop{margin-top:20px;padding:14px 16px;border-left:3px solid var(--red);background:#fff;font:500 14.5px/1.55 var(--f);color:#333}
+#cub-sec .cs-pop b{color:#1f2328}
+@media (max-width:900px){
+  #cub-sec .cs-wrap{grid-template-columns:1fr}
+  #cub-sec .cs-text{order:-1}
+  #cub-sec .cs-stage{aspect-ratio:auto;height:min(118vw,560px);min-height:420px}
+}
+@media (max-width:520px){
+  #cub-sec .cs-mode button{padding:8px 11px;font-size:11px}
+  #cub-sec .cs-badge span{display:none}
+  #cub-sec .cs-badge b{font-size:24px}
+  #cub-sec .sl-h{left:62px;right:16px}
+  #cub-sec .sl-h .sl-cap{left:-52px}
+  #cub-sec .sl-v{left:6px;width:46px}
+  #cub-sec .cc{width:32px;height:32px}
+  #cub-sec .cc.w{width:34px}
+  #cub-sec .cs-colors{grid-template-columns:1fr;gap:6px}
+  #cub-sec .cc-h{margin-top:4px}
+  #cub-sec .cs-wm{display:none}
+}
+</style>
+
+<section id="cub-sec" aria-label="Размеры и цвета кубической рейки">
+ <div class="cs-wrap">
+  <div class="cs-left">
+   <div class="cs-stage" id="cs-stage">
+    <div class="cs-grid"></div>
+    <svg class="cs-svg" id="cs-svg" viewBox="0 0 560 440" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Чертёж сечения кубической рейки">
+      <defs><pattern id="cs-pat" patternUnits="userSpaceOnUse" width="90" height="110"><image id="cs-pat-img" width="90" height="110" preserveAspectRatio="xMidYMid slice"/></pattern></defs>
+      <path id="cs-ghost" class="p-ghost"/>
+      <path id="cs-out" class="p-out" pathLength="1"/>
+      <path id="cs-in" class="p-in" pathLength="1"/>
+      <path id="cs-face" class="p-face"/>
+      <g id="cs-dims">
+        <path id="cs-hext" class="d-ext"/><path id="cs-hdim" class="d-line"/>
+        <path id="cs-wext" class="d-ext"/><path id="cs-wdim" class="d-line"/>
+        <text id="cs-htxt" class="d-txt h" text-anchor="middle" dominant-baseline="middle"></text>
+        <text id="cs-wtxt" class="d-txt" text-anchor="middle"></text>
+        <text id="cs-note" class="d-note" text-anchor="middle">лицевая сторона — видна из помещения</text>
+      </g>
+    </svg>
+    <div class="cs-gl" id="cs-gl"></div>
+    <div class="cs-wmt" aria-hidden="true"></div>
+    <div class="cs-mode" role="tablist">
+      <button class="on" data-mode="2d" role="tab">Сечение</button>
+      <button data-mode="3d" role="tab">3D-потолок</button>
+    </div>
+    <div class="cs-badge"><b id="cs-badge">80 × <i>50</i></b><span>ширина × высота, мм</span><em id="cs-bcol">RAL 9003 белый</em></div>
+    <div class="cs-wm" aria-hidden="true"><b>Cubica</b>.by</div>
+    <div class="cs-hint">Потяните, чтобы повернуть</div>
+    <div class="sl sl-v" id="sl-h" aria-label="Высота рейки"><div class="sl-cap">Высота</div></div>
+    <div class="sl sl-h" id="sl-w" aria-label="Ширина рейки"><div class="sl-cap">Ширина</div></div>
+   </div>
+   <div class="cs-colors" id="cs-colors">
+     <div class="cc-h">Цвета RAL</div><div class="cc-row" id="cc-ral"></div>
+     <div class="cc-h">Под дерево</div><div class="cc-row" id="cc-wood"></div>
+     <div class="cc-name"><span id="cc-name">RAL 9003 белый</span>
+       <span class="cc-ral" id="cc-ralbox"><small>RAL</small><input id="cc-ralin" inputmode="numeric" maxlength="4" placeholder="3020" autocomplete="off"></span></div>
+   </div>
+  </div>
+
+  <div class="cs-text">
+    <h2>Размеры, характеристики и цена кубообразной рейки</h2>
+    <p class="cs-lead">Базовая цена — от 5,00 BYN за погонный метр. Итоговая стоимость зависит от толщины металла, высоты сечения, цвета и объема партии. Для юрлиц действуют оптовые скидки. Отправьте чертеж — рассчитаем смету за 15 минут.</p>
+    <div class="cs-spec">
+      <p><b>Материал:</b> Высококачественная оцинкованная сталь с полимерным покрытием</p>
+      <p><b>Толщина металла:</b> 0,3–0,5 мм</p>
+      <p><b>Ширина рейки:</b> 30–300 мм (с шагом 1 мм). У каждой ширины может быть любая высота.</p>
+      <p><b>Высота рейки:</b> от 10 мм (с шагом 1 мм)</p>
+      <p><b>Расстояние между рейками:</b> от 10 мм (с шагом 1 мм)</p>
+      <p><b>Длина рейки:</b> до 6000 мм</p>
+    </div>
+    <p class="cs-pop"><b>Самые ходовые размеры</b> — ширина 30–100 мм и высота 30–200 мм с шагом 10 мм: их можно покрутить на схеме. Любой другой размер изготовим по вашему ТЗ с шагом 1 мм.</p>
+  </div>
+ </div>
+</section>
+
+<script>
+(function(){
+  var root = document.getElementById('cub-sec'); if(!root || root.dataset.init) return; root.dataset.init = 1;
+  var $ = function(id){ return root.querySelector('#'+id); };
+  var stage = $('cs-stage');
+  var ease = function(t){ return t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; };
+
+  // ====== Ходовые размеры и цвета Cubica ======
+  var WIDTHS  = [30,40,50,60,70,80,90,100];
+  var HEIGHTS = [30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200];
+  var TCDN = 'https://thb.tildacdn.biz/';
+  var COLORS = [
+    {id:'9003', name:'RAL 9003 белый',       hex:'#ECECE7'},
+    {id:'9005', name:'RAL 9005 чёрный',      hex:'#0E0E10'},
+    {id:'9006', name:'RAL 9006 серый',       hex:'#A1A1A0', metal:1},
+    {id:'9007', name:'RAL 9007 серебристый', hex:'#878581', metal:1},
+    {id:'7024', name:'RAL 7024 графит',      hex:'#45494E'},
+    {id:'7004', name:'RAL 7004 серый',       hex:'#969992'},
+    {id:'any',  name:'Любой цвет RAL',       hex:'#a80a0d', any:1}
+  ];
+  var WOODS = [
+    {id:'tokyo',      name:'Tokyo — тёмное дерево',     hex:'#6d4a33', img:'tild6533-6139-4231-a661-333334313965/2_Golden_wood_1.png'},
+    {id:'sydney',     name:'Sydney — рыжее дерево',     hex:'#b8691f', img:'tild3963-3638-4130-b739-306465333962/8_Coffe_wood_1.png'},
+    {id:'stockholm',  name:'Stockholm — тёмное дерево', hex:'#6a4630', img:'tild3962-6532-4534-b338-353332616565/1_White_wood_1.png'},
+    {id:'denver',     name:'Denver — светлое дерево',   hex:'#c9a462', img:'tild3034-3866-4265-b661-636362393262/6_Antique_wood_1.png'},
+    {id:'vancouver',  name:'Vancouver — тёмное дерево', hex:'#4a3d33', img:'tild3662-6537-4865-a436-303266626464/4_Choco_wood_1.png'},
+    {id:'wellington', name:'Wellington — светлое дерево', hex:'#9c8a70', img:'tild6536-6436-4961-a235-613462653064/7_Rowan_wood_1.png'},
+    {id:'toronto',    name:'Toronto — тёмное дерево',   hex:'#3c3530', img:'tild3034-3934-4735-b561-386564323165/5_Cherry_wood_1.png'},
+    {id:'rio',        name:'Rio — светлое дерево',      hex:'#b9762c', img:'tild3263-6434-4337-b438-383030653932/3_Honey_wood_1.png'}
+  ];
+  var RAL = {"1000":"cdba88","1001":"d0b084","1002":"d2aa5a","1003":"f9a800","1004":"e49e00","1005":"cb8e00","1006":"e29000","1007":"e88c00","1011":"af804f","1012":"ddaf27","1013":"e3d9c6","1014":"dddebc","1015":"e6d2b5","1016":"f1dd38","1017":"f6a950","1018":"faca30","1019":"a48f7a","1020":"a08f65","1021":"f6b600","1023":"f7b500","1024":"ba8f4c","1027":"a77f0e","1028":"ff9b00","1032":"e2a300","1033":"f99a1c","1034":"eb9c52","1037":"f09200","2000":"da6e00","2001":"ba481b","2002":"bf3922","2003":"f67828","2004":"e25303","2008":"e86d1e","2009":"d95b00","2010":"d46829","2011":"ec7a1c","2012":"de5f5a","3000":"a72920","3001":"9b2423","3002":"9b2321","3003":"861a22","3004":"6b1c23","3005":"59191f","3007":"3e2022","3009":"6d342d","3011":"792423","3012":"c6846d","3013":"972e25","3014":"cb7375","3015":"d8a0a6","3016":"a63d2f","3017":"cb555d","3018":"c73f4a","3020":"bb1e10","3022":"cf6955","3027":"ab273c","3031":"a6363d","5000":"384c70","5001":"1f4764","5002":"2b2c7c","5003":"2a3756","5004":"1d1e33","5005":"154889","5007":"41678d","5008":"313c48","5009":"2e5978","5010":"13447c","5011":"232c3f","5012":"3481b8","5013":"232d53","5014":"6c7c98","5015":"2874b2","5017":"0e518d","5018":"21888f","5019":"1a5784","5020":"0b4151","5021":"07737a","5022":"2f2a5a","5023":"4d668e","5024":"6a93b0","6000":"327662","6001":"28713e","6002":"276235","6003":"4b573e","6004":"0e4243","6005":"0f4336","6006":"40433b","6007":"283424","6008":"35382e","6009":"26392f","6010":"3e753b","6011":"68825b","6012":"31403d","6013":"797c5a","6014":"444337","6015":"3d403a","6016":"026a52","6017":"468641","6018":"48a43f","6019":"b7d9b1","6020":"354733","6021":"86a47c","6022":"3e3c32","6024":"008754","6025":"53753c","6026":"005d52","6027":"81c0bb","6028":"2d5546","6029":"007243","6032":"0f8558","6033":"478a84","6034":"7fb0b2","7000":"7e8b92","7001":"8f999f","7002":"817f68","7003":"7a7b6d","7004":"9ea0a1","7005":"6b716f","7006":"756f61","7008":"746643","7009":"5b6259","7010":"575d57","7011":"555d61","7012":"596163","7013":"555548","7015":"51565c","7016":"373f43","7021":"2e3234","7022":"4b4d46","7023":"818479","7024":"474a50","7026":"374447","7030":"939388","7031":"5d6970","7032":"b9b9a8","7033":"818979","7034":"939176","7035":"cbd0cc","7036":"9a9697","7037":"7c7f7e","7038":"b4b8b0","7039":"6b695f","7040":"9da3a6","7042":"8f9695","7043":"4e5451","7044":"bdbdb2","7045":"91969a","7046":"82898e","7047":"cfd0cf","8000":"887142","8001":"9c6b30","8002":"7b5141","8003":"80542f","8004":"8f4e35","8007":"6f4a2f","8008":"6f4f28","8011":"5a3a29","8012":"673831","8014":"49392d","8015":"633a34","8016":"4c2f26","8017":"44322d","8019":"3f3a3a","8022":"211f20","8023":"a65e2f","8024":"79553c","8025":"755c49","8028":"4e3b2b","9001":"efebdc","9002":"ddded4","9003":"f4f8f4","9004":"2e3032","9005":"0a0a0d","9006":"a5a8a6","9007":"8f8f8c","9010":"f7f9ef","9011":"292c2f","9016":"f7fbf5","9017":"2a2d2f","9018":"cfd3cd","9022":"9c9c9c","9023":"7e8182"};
+
+  var cur = {w:80, h:50}, tgt = {w:80, h:50}, sizeTw = null, mode = '2d', auto = true;
+  var col = {kind:'ral', hex:'#ECECE7', name:'RAL 9003 белый', metal:0};
+
+  // ---------- 2D-чертёж ----------
+  var S = 1.28, BASE_Y = 318, CX = 312, LIP = 5;
+  function profPath(w,h){
+    var x0 = CX - w*S/2, x1 = CX + w*S/2, yb = BASE_Y, yt = BASE_Y - h*S, l = LIP*S;
+    return 'M'+(x0+l)+' '+yt+' H'+x0+' V'+yb+' H'+x1+' V'+yt+' H'+(x1-l);
+  }
+  function draw(w,h){
+    var x0 = CX - w*S/2, x1 = CX + w*S/2, yb = BASE_Y, yt = BASE_Y - h*S, d = profPath(w,h);
+    $('cs-out').setAttribute('d', d); $('cs-in').setAttribute('d', d);
+    $('cs-face').setAttribute('d','M'+x0+' '+(yb+11)+' H'+x1);
+    var hx = x0 - 40;
+    $('cs-hext').setAttribute('d','M'+(x0-9)+' '+yt+' H'+(hx-8)+' M'+(x0-9)+' '+yb+' H'+(hx-8));
+    $('cs-hdim').setAttribute('d','M'+hx+' '+yt+' V'+yb+' M'+(hx-5)+' '+(yt+5)+' L'+(hx+5)+' '+(yt-5)+' M'+(hx-5)+' '+(yb+5)+' L'+(hx+5)+' '+(yb-5));
+    var ht = $('cs-htxt'), hy = (yt+yb)/2; ht.textContent = Math.round(h); ht.setAttribute('x', hx-15); ht.setAttribute('y', hy); ht.setAttribute('transform','rotate(-90 '+(hx-15)+' '+hy+')');
+    var wy = yb + 42;
+    $('cs-wext').setAttribute('d','M'+x0+' '+(yb+9)+' V'+(wy+8)+' M'+x1+' '+(yb+9)+' V'+(wy+8));
+    $('cs-wdim').setAttribute('d','M'+x0+' '+wy+' H'+x1+' M'+(x0-5)+' '+(wy+5)+' L'+(x0+5)+' '+(wy-5)+' M'+(x1-5)+' '+(wy+5)+' L'+(x1+5)+' '+(wy-5));
+    var wt = $('cs-wtxt'); wt.textContent = Math.round(w); wt.setAttribute('x', CX); wt.setAttribute('y', wy-9);
+    var nt = $('cs-note'); nt.setAttribute('x', CX); nt.setAttribute('y', wy+22);
+    $('cs-badge').innerHTML = Math.round(w)+' × <i>'+Math.round(h)+'</i>';
+  }
+  $('cs-ghost').setAttribute('d', profPath(100,200)); // габарит самого большого ходового сечения
+
+  // ---------- ползунки ----------
+  function Slider(el, values, vertical, onChange){
+    var self = this; self.values = values; self.i = 0;
+    var track = document.createElement('div'); track.className = 'sl-track';
+    var fill = document.createElement('div'); fill.className = 'sl-fill'; track.appendChild(fill); el.appendChild(track);
+    var labs = [];
+    values.forEach(function(v,i){
+      var p = i/(values.length-1)*100;
+      var t = document.createElement('div'); t.className = 'sl-tick'; t.style[vertical?'bottom':'left'] = p+'%'; el.appendChild(t);
+      if (!vertical || v === 30 || v % 50 === 0){
+        var l = document.createElement('div'); l.className = 'sl-lab'; l.textContent = v; l.style[vertical?'bottom':'left'] = p+'%'; l.dataset.v = v; el.appendChild(l); labs.push(l);
+      }
+    });
+    var th = document.createElement('div'); th.className = 'sl-thumb'; th.tabIndex = 0; th.setAttribute('role','slider');
+    th.setAttribute('aria-valuemin', values[0]); th.setAttribute('aria-valuemax', values[values.length-1]);
+    th.setAttribute('aria-orientation', vertical?'vertical':'horizontal'); th.setAttribute('aria-label', el.getAttribute('aria-label'));
+    el.appendChild(th);
+    self.set = function(i, silent){
+      i = Math.max(0, Math.min(values.length-1, i)); self.i = i;
+      var p = i/(values.length-1)*100;
+      th.style[vertical?'bottom':'left'] = p+'%'; fill.style[vertical?'height':'width'] = p+'%';
+      th.setAttribute('aria-valuenow', values[i]); th.setAttribute('aria-valuetext', values[i]+' мм');
+      labs.forEach(function(l){ l.classList.toggle('on', +l.dataset.v === values[i]); });
+      if (!silent) onChange(values[i]);
+    };
+    function fromEvent(e){
+      var r = track.getBoundingClientRect();
+      var k = vertical ? (r.bottom - e.clientY)/r.height : (e.clientX - r.left)/r.width;
+      return Math.round(Math.max(0,Math.min(1,k))*(values.length-1));
+    }
+    var drag = false;
+    el.addEventListener('pointerdown', function(e){ drag = true; el.setPointerCapture(e.pointerId); stopAuto(); var i = fromEvent(e); if (i!==self.i) self.set(i); th.focus({preventScroll:true}); e.preventDefault(); });
+    el.addEventListener('pointermove', function(e){ if(!drag) return; var i = fromEvent(e); if (i!==self.i) self.set(i); });
+    el.addEventListener('pointerup', function(){ drag = false; });
+    el.addEventListener('pointercancel', function(){ drag = false; });
+    th.addEventListener('keydown', function(e){
+      var d = {ArrowUp:1,ArrowRight:1,ArrowDown:-1,ArrowLeft:-1}[e.key];
+      if (d){ e.preventDefault(); stopAuto(); self.set(self.i + d); }
+      if (e.key==='Home'){ e.preventDefault(); stopAuto(); self.set(0); }
+      if (e.key==='End'){ e.preventDefault(); stopAuto(); self.set(values.length-1); }
+    });
+  }
+  function setTarget(w,h){
+    tgt = {w:w, h:h};
+    sizeTw = {from:{w:cur.w,h:cur.h}, to:{w:w,h:h}, t:0, dur: auto ? .9 : .32};
+  }
+  var slW = new Slider($('sl-w'), WIDTHS, false, function(v){ setTarget(v, tgt.h); });
+  var slH = new Slider($('sl-h'), HEIGHTS, true, function(v){ setTarget(tgt.w, v); });
+  slW.set(WIDTHS.indexOf(80), true); slH.set(HEIGHTS.indexOf(50), true);
+
+  // ---------- цвета ----------
+  var ralRow = $('cc-ral'), woodRow = $('cc-wood');
+  function swatch(c, wood){
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'cc' + (wood?' w':'') + (c.any?' any':'');
+    b.title = c.name; b.setAttribute('aria-label', c.name);
+    if (wood) b.style.backgroundImage = 'url('+TCDN + c.img.replace('/', '/-/resize/96x/')+')';
+    else if (!c.any) b.style.background = c.hex;
+    b.addEventListener('click', function(){ stopAuto(); pickColor(c, wood, b); });
+    (wood?woodRow:ralRow).appendChild(b); c.el = b; return b;
+  }
+  COLORS.forEach(function(c){ swatch(c,false); }); WOODS.forEach(function(c){ swatch(c,true); });
+  var ralBox = $('cc-ralbox'), ralIn = $('cc-ralin');
+  function markSw(b){ root.querySelectorAll('.cc').forEach(function(x){ x.classList.toggle('on', x===b); }); }
+  function setName(n){ $('cc-name').textContent = n; $('cs-bcol').textContent = n; }
+  function pickColor(c, wood, b){
+    markSw(b);
+    if (c.any){ ralBox.classList.add('on'); setName('Любой RAL — введите номер:'); setTimeout(function(){ ralIn.focus(); }, 30); return; }
+    ralBox.classList.remove('on');
+    if (wood) col = {kind:'wood', hex:c.hex, img:TCDN + c.img.replace('/', '/-/resize/512x/'), name:c.name, metal:0};
+    else col = {kind:'ral', hex:c.hex, name:c.name, metal:c.metal?1:0};
+    setName(c.name); applyColor();
+  }
+  ralIn.addEventListener('input', function(){
+    var v = ralIn.value.replace(/\D/g,'').slice(0,4); if (ralIn.value !== v) ralIn.value = v;
+    if (v.length === 4 && RAL[v]){ col = {kind:'ral', hex:'#'+RAL[v], name:'RAL '+v, metal:/^90(06|07|22|23)$/.test(v)?1:0}; setName('RAL '+v+' (оттенок на экране примерный)'); $('cs-bcol').textContent = 'RAL '+v; applyColor(); }
+    else if (v.length === 4){ setName('RAL '+v+' нет в каталоге RAL Classic'); }
+  });
+  function applyColor(){
+    var pin = $('cs-in');
+    if (col.kind === 'wood'){ $('cs-pat-img').setAttribute('href', col.img); pin.setAttribute('stroke', 'url(#cs-pat)'); }
+    else pin.setAttribute('stroke', col.hex);
+    if (window.__cubSec3D) window.__cubSec3D.setColor(col);
+  }
+  markSw(COLORS[0].el); applyColor();
+
+  // ---------- прорисовка при появлении ----------
+  var drawn = false;
+  function drawIn(){
+    if (drawn) return; drawn = true;
+    var o = $('cs-out'), n = $('cs-in'), d = $('cs-dims');
+    [o,n].forEach(function(p){ p.style.strokeDasharray = 1; p.style.strokeDashoffset = 1; });
+    d.style.opacity = 0;
+    var t0 = performance.now();
+    (function step(now){
+      var k = Math.min(1,(now-t0)/1400), e = ease(k);
+      o.style.strokeDashoffset = 1 - e; n.style.strokeDashoffset = 1 - ease(Math.max(0,Math.min(1,(k-.15)/.85)));
+      d.style.opacity = Math.max(0,(k-.55)/.45);
+      if (k<1) requestAnimationFrame(step); else { o.style.strokeDasharray = n.style.strokeDasharray = ''; }
+    })(t0);
+  }
+
+  // ---------- демо: пока посетитель не трогает, размеры и цвета меняются сами ----------
+  var DEMO = [[80,50,'9003'],[30,100,'tokyo'],[50,200,'9005'],[100,40,'denver'],[40,150,'7024'],[60,80,'wellington'],[30,200,'9007'],[90,120,'rio']];
+  var demoI = 0, demoT = 0, DEMO_T = 3.4;
+  function stopAuto(){ auto = false; }
+  function demoStep(){
+    demoI = (demoI+1) % DEMO.length; var d = DEMO[demoI];
+    slW.set(WIDTHS.indexOf(d[0]), true); slH.set(HEIGHTS.indexOf(d[1]), true); setTarget(d[0], d[1]);
+    var c = COLORS.filter(function(x){return x.id===d[2];})[0], wood = false;
+    if (!c){ c = WOODS.filter(function(x){return x.id===d[2];})[0]; wood = true; }
+    pickColor(c, wood, c.el);
+  }
+
+  var visible = false, last = performance.now();
+  function loop(now){
+    var dt = Math.min(.1,(now-last)/1000); last = now;
+    if (sizeTw){
+      sizeTw.t = Math.min(1, sizeTw.t + dt/sizeTw.dur); var e = ease(sizeTw.t);
+      cur.w = sizeTw.from.w + (sizeTw.to.w - sizeTw.from.w)*e; cur.h = sizeTw.from.h + (sizeTw.to.h - sizeTw.from.h)*e;
+      draw(cur.w, cur.h); if (window.__cubSec3D) window.__cubSec3D.size(cur.w, cur.h);
+      if (sizeTw.t >= 1) sizeTw = null;
+    }
+    if (auto && visible && drawn && !document.hidden){ demoT += dt; if (demoT >= DEMO_T){ demoT = 0; demoStep(); } }
+    requestAnimationFrame(loop);
+  }
+  function fitView(){ $('cs-svg').setAttribute('viewBox', stage.clientWidth < 560 ? '150 14 320 420' : '0 0 560 440'); }
+  fitView(); window.addEventListener('resize', fitView);
+  draw(cur.w, cur.h); requestAnimationFrame(loop);
+  new IntersectionObserver(function(en){ visible = en[0].isIntersecting; if (visible) drawIn(); if (window.__cubSec3D) window.__cubSec3D.visible = visible; }, {threshold:.25}).observe(stage);
+
+  // ---------- режимы ----------
+  root.querySelectorAll('.cs-mode button').forEach(function(b){
+    b.addEventListener('click', function(){
+      var m = b.dataset.mode; if (m === mode) return; mode = m;
+      root.querySelectorAll('.cs-mode button').forEach(function(x){ x.classList.toggle('on', x === b); });
+      stage.classList.toggle('is-3d', m === '3d');
+      if (m === '3d') ensure3D(function(){ window.__cubSec3D.play(); });
+    });
+  });
+
+  // ---------- 3D (three.js r128 грузится только по кнопке «3D») ----------
+  function loadScript(src){ return new Promise(function(res,rej){ var s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+  var loading = false, cbs = [];
+  function ensure3D(cb){
+    if (window.__cubSec3D) return cb();
+    cbs.push(cb); if (loading) return; loading = true;
+    (window.THREE ? Promise.resolve() : loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'))
+      .then(init3D).then(function(){ cbs.forEach(function(f){ f(); }); cbs = []; })
+      .catch(function(e){ console.error('[Cubica] three.js', e); });
+  }
+  function init3D(){
+    var THREE = window.THREE, box = $('cs-gl');
+    var W = function(){ return Math.max(1, box.clientWidth); }, H = function(){ return Math.max(1, box.clientHeight); };
+    var renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2)); renderer.setSize(W(), H());
+    renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    box.appendChild(renderer.domElement);
+    var scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(32, W()/H(), 1, 30000);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa4b0, .55));
+    var key = new THREE.DirectionalLight(0xffffff, 1.45); key.position.set(-900,-1100,500); key.castShadow = true;
+    key.shadow.mapSize.set(1024,1024); Object.assign(key.shadow.camera,{left:-1100,right:1100,top:1100,bottom:-1100,near:10,far:5000}); key.shadow.bias = -.0005; scene.add(key);
+    var rim = new THREE.DirectionalLight(0xffffff, .5); rim.position.set(900,-300,-900); scene.add(rim);
+    var top = new THREE.DirectionalLight(0xffffff, .35); top.position.set(200,1200,300); scene.add(top);
+
+    var mat = new THREE.MeshStandardMaterial({color:0xECECE7, metalness:.2, roughness:.45});
+    var matCar = new THREE.MeshStandardMaterial({color:0x2a2e33, metalness:.6, roughness:.4});
+    var LEN = 1500, N = 5, GAP = 50, TH = 1.4, texCache = {};
+    var size = {w:cur.w, h:cur.h};
+    function railGeom(w,h){
+      var s = new THREE.Shape(), x0=-w/2, x1=w/2, l=LIP, t=TH;
+      s.moveTo(x0,0); s.lineTo(x1,0); s.lineTo(x1,h); s.lineTo(x1-l,h); s.lineTo(x1-l,h-t); s.lineTo(x1-t,h-t);
+      s.lineTo(x1-t,t); s.lineTo(x0+t,t); s.lineTo(x0+t,h-t); s.lineTo(x0+l,h-t); s.lineTo(x0+l,h); s.lineTo(x0,h); s.lineTo(x0,0);
+      var g = new THREE.ExtrudeGeometry(s, {depth:LEN, bevelEnabled:false}); g.translate(0,0,-LEN/2); return g;
+    }
+    var group = new THREE.Group(); scene.add(group);
+    var geom = railGeom(size.w,size.h), rails = [], carriers = [];
+    for (var i=0;i<N;i++){ var m = new THREE.Mesh(geom, mat); m.castShadow = m.receiveShadow = true; group.add(m); rails.push(m); }
+    for (var c=0;c<2;c++){ var cm = new THREE.Mesh(new THREE.BoxGeometry(1,22,24), matCar); cm.castShadow = true; group.add(cm); carriers.push(cm); }
+    function rebuild(){ var g = railGeom(size.w,size.h); rails.forEach(function(m){ m.geometry = g; }); geom.dispose(); geom = g; }
+
+    var api = window.__cubSec3D = { visible:true,
+      play:function(){ T = 0; fit(); },
+      size:function(w,h){ size.w = w; size.h = h; rebuild(); },
+      setColor:function(cc){
+        if (cc.kind === 'wood'){
+          var tex = texCache[cc.img];
+          if (!tex){
+            tex = texCache[cc.img] = new THREE.TextureLoader().load(cc.img, function(){ mat.needsUpdate = true; });
+            tex.crossOrigin = 'anonymous'; tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(1/150, 1/700); tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 8;
+          }
+          mat.map = tex; mat.color.set(0xffffff); mat.metalness = .05; mat.roughness = .55;
+        } else { mat.map = null; mat.color.set(cc.hex); mat.metalness = cc.metal ? .6 : .2; mat.roughness = cc.metal ? .32 : .45; }
+        mat.needsUpdate = true;
+      }
+    };
+    api.setColor(col);
+    var orbit = {az:-.5, el:-.48, base:2400}, drag = null, T = 99;
+    function fit(){ camera.aspect = W()/H(); camera.updateProjectionMatrix(); renderer.setSize(W(), H()); }
+    function placeCam(){
+      var span = Math.max(LEN, N*(size.w+GAP)) * .9 + size.h*2.2;
+      var base = (1500 + span*1.25) * Math.max(1, 1.25/camera.aspect);
+      var zk = ease(Math.max(0, Math.min(1, (T-.4)/2.4))), r = 600 + (base-600)*zk, ce = Math.cos(orbit.el);
+      camera.position.set(r*ce*Math.sin(orbit.az), r*Math.sin(orbit.el)+size.h*.5, r*ce*Math.cos(orbit.az));
+      camera.lookAt(0, size.h*.5, 0);
+    }
+    function pose(t){
+      var e1 = ease(Math.min(1, t/1.1)), p = size.w + GAP, half = (N-1)/2;
+      rails.forEach(function(m,i){
+        var k = ease(Math.max(0, Math.min(1, (t - 1.25 - Math.abs(i-half)*.18)/.9)));
+        m.scale.z = Math.max(.002, e1); m.position.x = (i-half)*p*k; m.position.y = (i===half) ? 0 : -120*(1-k); m.visible = (i===half) || k>.001;
+      });
+      var kc = ease(Math.max(0, Math.min(1,(t-2.6)/.8)));
+      carriers.forEach(function(cm,j){ cm.visible = kc>.001; cm.scale.x = N*p + 120; cm.position.set(0, size.h + 11 + 260*(1-kc), (j?1:-1)*LEN*.3); });
+    }
+    var el = renderer.domElement;
+    el.addEventListener('pointerdown', function(e){ drag = {x:e.clientX, y:e.clientY, az:orbit.az, el:orbit.el}; el.setPointerCapture(e.pointerId); el.style.cursor='grabbing'; });
+    el.addEventListener('pointermove', function(e){ if(!drag) return; orbit.az = drag.az - (e.clientX-drag.x)*.006; orbit.el = Math.max(-1.3, Math.min(.9, drag.el - (e.clientY-drag.y)*.005)); });
+    el.addEventListener('pointerup', function(){ drag = null; el.style.cursor=''; });
+    window.addEventListener('resize', fit); if (window.ResizeObserver) new ResizeObserver(fit).observe(box);
+    fit();
+    var lastT = performance.now();
+    (function frame(now){
+      requestAnimationFrame(frame);
+      var dt = Math.min(.25,(now-lastT)/1000); lastT = now;
+      if (mode !== '3d' || !api.visible || document.hidden) return;
+      T += dt; if (!drag && T > 3.4) orbit.az += dt*.1;
+      pose(T); placeCam(); renderer.render(scene, camera);
+    })(lastT);
+  }
+})();
+</script>
